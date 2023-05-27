@@ -9,6 +9,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Table from 'react-bootstrap/Table';
 import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 const useStyles = makeStyles()((theme, props) => ({
     root: {
@@ -53,6 +54,7 @@ const useStyles = makeStyles()((theme, props) => ({
 function App() {
   const { classes } = useStyles();
   const reportTemplateRef = useRef(null);
+  const exportRef = useRef();
   const [data, setData] = useState(
     {
       customerName: '',
@@ -158,240 +160,262 @@ function App() {
     });
   };
 
+  const printDocument = () => {
+    const input = document.getElementById("divToPrint");
+    html2canvas(input).then((canvas) => {
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF();
+      pdf.addImage(imgData, "JPEG", 10, 10, 250, 270);
+      // pdf.output('dataurlnewwindow');
+      pdf.save("download.pdf");
+      let x = pdf.output('blob');
+
+      var reader = new FileReader();
+      reader.readAsDataURL(x); 
+      reader.onloadend = function() {
+        var base64data = reader.result;                
+        console.log(base64data);
+      }
+    });
+  };
+
   return (
-    <div className={classes.root} ref={reportTemplateRef}>
-      <h1>Return Trip Checklist</h1>
-      <Table striped bordered hover style={{width: '50rem'}}>
-      <thead>
-        <tr> 
-          <th colSpan={2} style={{backgroundColor: 'blue', color: '#FFF', textAlign: 'left'}}>Customer Information</th>          
-        </tr>
-      </thead>
-      <tbody>
-      <tr className={classes.rowLabel}>
-          <td className={classes.label}>W/O #</td>
-          <td className={classes.label}>Does this return trip require new product?</td>
-        </tr>
-        <tr>
-          <td>
-            <input 
-              name={'won'}
-              onChange={handleInputChage}
-              value={data.won} 
-              className={classes.input}
-            />
-          </td>
-          <td>
-            <YesNo name={'doesThisReturn'}/>
-          </td>
-        </tr>
+    <div >
+      <div id='divToPrint'>
+        <h1>Return Trip Checklist</h1>
+        <Table striped bordered hover style={{width: '50rem'}} ref={exportRef}>
+        <thead>
+          <tr> 
+            <th colSpan={2} style={{backgroundColor: 'blue', color: '#FFF', textAlign: 'left'}}>Customer Information</th>          
+          </tr>
+        </thead>
+        <tbody>
         <tr className={classes.rowLabel}>
-          <td className={classes.label}>Customer name</td>
-          <td className={classes.label}>Photo of defects required for remakes. Complete?</td>
-        </tr>
-        <tr>
-          <td>
-            <input 
-              name={'customerName'}
-              onChange={handleInputChage}
-              value={data.customerName} 
-              className={classes.input}
-            />
-          </td>
-          <td>
-            <YesNo name={'photoOfDefects'}/>
-          </td>
-        </tr>
-        <tr className={classes.rowLabel}>
-          <td className={classes.label}>Address</td>
-          <td className={classes.label}>Has the customer signed off/paid for job?</td>
-        </tr>
-        <tr>
-          <td>
-            <input 
-              name={'address'}
-              onChange={handleInputChage}
-              value={data.address} 
-              className={classes.input}
-            />
-          </td>
-          <td>
-            <YesNo name={'hasTheCustomerSigned'}/>
-          </td>
-        </tr>
-        <tr className={classes.rowLabel}>
-          <td className={classes.label}>Phone Number</td>
-          <td className={classes.label}>Have you given then a return date?</td>
-        </tr>
-        <tr>
-          <td>
-            <input               
-              name={'phoneNumber'}
-              onChange={handleInputChage}
-              value={data.phoneNumber} 
-              className={classes.input}
-            />
-          </td>
-          <td>
-            <YesNo name={'haveYouGiven'}/>
-          </td>
-        </tr>
-        <tr className={classes.rowLabel}>
-          <td className={classes.label}>Last install date</td>
-          <td className={classes.label}>{data.haveYouGiven && 'Return Date'}</td>
-        </tr>
-        <tr>
-          <td>
-            <input
-                type='date' 
-                name={'lastInstallDate'}
+            <td className={classes.label}>W/O #</td>
+            <td className={classes.label}>Does this return trip require new product?</td>
+          </tr>
+          <tr>
+            <td>
+              <input 
+                name={'won'}
                 onChange={handleInputChage}
-                value={data.lastInstallDate} 
+                value={data.won} 
                 className={classes.input}
-            />
-          </td>
-          <td>
-            {data.haveYouGiven && 
+              />
+            </td>
+            <td>
+              <YesNo name={'doesThisReturn'}/>
+            </td>
+          </tr>
+          <tr className={classes.rowLabel}>
+            <td className={classes.label}>Customer name</td>
+            <td className={classes.label}>Photo of defects required for remakes. Complete?</td>
+          </tr>
+          <tr>
+            <td>
+              <input 
+                name={'customerName'}
+                onChange={handleInputChage}
+                value={data.customerName} 
+                className={classes.input}
+              />
+            </td>
+            <td>
+              <YesNo name={'photoOfDefects'}/>
+            </td>
+          </tr>
+          <tr className={classes.rowLabel}>
+            <td className={classes.label}>Address</td>
+            <td className={classes.label}>Has the customer signed off/paid for job?</td>
+          </tr>
+          <tr>
+            <td>
+              <input 
+                name={'address'}
+                onChange={handleInputChage}
+                value={data.address} 
+                className={classes.input}
+              />
+            </td>
+            <td>
+              <YesNo name={'hasTheCustomerSigned'}/>
+            </td>
+          </tr>
+          <tr className={classes.rowLabel}>
+            <td className={classes.label}>Phone Number</td>
+            <td className={classes.label}>Have you given then a return date?</td>
+          </tr>
+          <tr>
+            <td>
+              <input               
+                name={'phoneNumber'}
+                onChange={handleInputChage}
+                value={data.phoneNumber} 
+                className={classes.input}
+              />
+            </td>
+            <td>
+              <YesNo name={'haveYouGiven'}/>
+            </td>
+          </tr>
+          <tr className={classes.rowLabel}>
+            <td className={classes.label}>Last install date</td>
+            <td className={classes.label}>{data.haveYouGiven && 'Return Date'}</td>
+          </tr>
+          <tr>
+            <td>
               <input
                   type='date' 
-                  name={'returnDate'}
+                  name={'lastInstallDate'}
                   onChange={handleInputChage}
-                  value={data.returnDate} 
+                  value={data.lastInstallDate} 
                   className={classes.input}
               />
-            }
-          </td>
-        </tr>
-        <tr className={classes.rowLabel}>
-          <td className={classes.label}>Reason for return trip</td>
-          <td className={classes.label}>Item Numbers & Descriptions</td>
-        </tr>
-        <tr>
-          <td>
-            <textarea 
-              name={'reason'}
-              onChange={handleInputChage}
-              value={data.reason} 
-              rows={3}
-              className={classes.input}
-            />
-          </td>
-          <td>
-            <textarea 
-                name={'itemNumbers'}
+            </td>
+            <td>
+              {data.haveYouGiven && 
+                <input
+                    type='date' 
+                    name={'returnDate'}
+                    onChange={handleInputChage}
+                    value={data.returnDate} 
+                    className={classes.input}
+                />
+              }
+            </td>
+          </tr>
+          <tr className={classes.rowLabel}>
+            <td className={classes.label}>Reason for return trip</td>
+            <td className={classes.label}>Item Numbers & Descriptions</td>
+          </tr>
+          <tr>
+            <td>
+              <textarea 
+                name={'reason'}
                 onChange={handleInputChage}
-                value={data.itemNumbers} 
+                value={data.reason} 
                 rows={3}
                 className={classes.input}
               />
-          </td>
-        </tr>
-        <tr> 
-          <th colSpan={2} style={{backgroundColor: 'blue', color: '#FFF', textAlign: 'left'}}>Additional Information</th>          
-        </tr>
-        <tr className={classes.rowLabel}>
-          <td className={classes.label}>Additional Instructions for installer</td>
-          <td className={classes.label}>Completion notes if needed</td>
-        </tr>
-        <tr>
-          <td>
-            <textarea 
-              name={'additionalInstructions'}
-              onChange={handleInputChage}
-              value={data.additionalInstructions} 
-              rows={3}
-              className={classes.input}
-            />
-          </td>
-          <td>
-            <textarea 
-                name={'completionNotes'}
+            </td>
+            <td>
+              <textarea 
+                  name={'itemNumbers'}
+                  onChange={handleInputChage}
+                  value={data.itemNumbers} 
+                  rows={3}
+                  className={classes.input}
+                />
+            </td>
+          </tr>
+          <tr> 
+            <th colSpan={2} style={{backgroundColor: 'blue', color: '#FFF', textAlign: 'left'}}>Additional Information</th>          
+          </tr>
+          <tr className={classes.rowLabel}>
+            <td className={classes.label}>Additional Instructions for installer</td>
+            <td className={classes.label}>Completion notes if needed</td>
+          </tr>
+          <tr>
+            <td>
+              <textarea 
+                name={'additionalInstructions'}
                 onChange={handleInputChage}
-                value={data.completionNotes} 
+                value={data.additionalInstructions} 
                 rows={3}
                 className={classes.input}
               />
-          </td>
-        </tr>
-        <tr> 
-          <th colSpan={2} style={{backgroundColor: 'blue', color: '#FFF', textAlign: 'left'}}>Admin To Complete</th>          
-        </tr>
-        <tr className={classes.rowLabel}>
-          <td className={classes.label}>Product Ordered Date</td>
-          <td className={classes.label}>Confirmed Arrival Date</td>
-        </tr>
-        <tr>
-          <td>
-            <input
-                type='date' 
-                name={'productOrderedDate'}
-                onChange={handleInputChage}
-                value={data.productOrderedDate} 
-                className={classes.input}
-            />
-          </td>
-          <td>
-              <YesNo name={'attachRemakeForm'}/>
-          </td>
-        </tr>
-        <tr className={classes.rowLabel}>
-          <td className={classes.label}>Expected Arrival Date</td>
-          <td className={classes.label}>Product In Stock</td>
-        </tr>
-        <tr>
-          <td>
-            <input
-                type='date' 
-                name={'expectedArrivalDate'}
-                onChange={handleInputChage}
-                value={data.expectedArrivalDate} 
-                className={classes.input}
-            />
-          </td>
-          <td>
-            <YesNo name={'productInStock'}/>
-          </td>
-        </tr>
-        <tr className={classes.rowLabel}>
-          <td className={classes.label}>Arranged Return Date</td>
-          <td className={classes.label}>Job Completed By</td>
-        </tr>
-        <tr>
-          <td>
-            <input
-                type='date' 
-                name={'arrangedReturnDate'}
-                onChange={handleInputChage}
-                value={data.arrangedReturnDate} 
-                className={classes.input}
-            />
-          </td>
-          <td>
+            </td>
+            <td>
+              <textarea 
+                  name={'completionNotes'}
+                  onChange={handleInputChage}
+                  value={data.completionNotes} 
+                  rows={3}
+                  className={classes.input}
+                />
+            </td>
+          </tr>
+          <tr> 
+            <th colSpan={2} style={{backgroundColor: 'blue', color: '#FFF', textAlign: 'left'}}>Admin To Complete</th>          
+          </tr>
+          <tr className={classes.rowLabel}>
+            <td className={classes.label}>Product Ordered Date</td>
+            <td className={classes.label}>Confirmed Arrival Date</td>
+          </tr>
+          <tr>
+            <td>
+              <input
+                  type='date' 
+                  name={'productOrderedDate'}
+                  onChange={handleInputChage}
+                  value={data.productOrderedDate} 
+                  className={classes.input}
+              />
+            </td>
+            <td>
+                <YesNo name={'attachRemakeForm'}/>
+            </td>
+          </tr>
+          <tr className={classes.rowLabel}>
+            <td className={classes.label}>Expected Arrival Date</td>
+            <td className={classes.label}>Product In Stock</td>
+          </tr>
+          <tr>
+            <td>
+              <input
+                  type='date' 
+                  name={'expectedArrivalDate'}
+                  onChange={handleInputChage}
+                  value={data.expectedArrivalDate} 
+                  className={classes.input}
+              />
+            </td>
+            <td>
+              <YesNo name={'productInStock'}/>
+            </td>
+          </tr>
+          <tr className={classes.rowLabel}>
+            <td className={classes.label}>Arranged Return Date</td>
+            <td className={classes.label}>Job Completed By</td>
+          </tr>
+          <tr>
+            <td>
+              <input
+                  type='date' 
+                  name={'arrangedReturnDate'}
+                  onChange={handleInputChage}
+                  value={data.arrangedReturnDate} 
+                  className={classes.input}
+              />
+            </td>
+            <td>
 
-          </td>
-        </tr>
-        <tr className={classes.rowLabel}>
-          <td className={classes.label}>Attach Remake Form</td>
-          <td className={classes.label}>Job Completed Date</td>
-        </tr>
-        <tr>
-          <td>
-            <YesNo name={'attachRemakeForm'}/>
-          </td>
-          <td>
-            <input
-                type='date' 
-                name={'jobCompletedDate'}
-                onChange={handleInputChage}
-                value={data.jobCompletedDate} 
-                className={classes.input}
-            />
-          </td>
-        </tr>
-      </tbody>
-    </Table>
+            </td>
+          </tr>
+          <tr className={classes.rowLabel}>
+            <td className={classes.label}>Attach Remake Form</td>
+            <td className={classes.label}>Job Completed Date</td>
+          </tr>
+          <tr>
+            <td>
+              <YesNo name={'attachRemakeForm'}/>
+            </td>
+            <td>
+              <input
+                  type='date' 
+                  name={'jobCompletedDate'}
+                  onChange={handleInputChage}
+                  value={data.jobCompletedDate} 
+                  className={classes.input}
+              />
+            </td>
+          </tr>
+        </tbody>
+      </Table>
+    </div>
     <button className="button" onClick={handleGeneratePdf}>  Generate PDF
-      </button>
+    </button><button onClick={printDocument}>Print</button>
+      
     </div>
   );
 }
