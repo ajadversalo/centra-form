@@ -1,21 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import Switch from '@mui/material/Switch';
 import { makeStyles } from 'tss-react/mui';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
+import Table from 'react-bootstrap/Table';
+import jsPDF from "jspdf";
 
 const useStyles = makeStyles()((theme, props) => ({
     root: {
-        padding: '1rem',
-    },
+    padding: '2rem',
+    "& .MuiInputBase-root": {
+      padding: 0,
+      "& .MuiButtonBase-root": {
+        padding: 0,
+        paddingLeft: 10,
+      },
+      "& .MuiInputBase-input": {
+        padding: 15,
+        paddingLeft: 0
+      },
+      "& .MuiOutlinedInput-notchedOutline": {
+        border: 'none'
+      }
+    }
+  },
     paper: {
       padding: '1rem',
       width: '100%'
@@ -24,31 +36,23 @@ const useStyles = makeStyles()((theme, props) => ({
       fontSize: '2rem',
       paddingBottom: '1rem'
     },
-    row: {
-      display: 'flex',
-      flexDirection: 'row',
-      width: '100%',
-      paddingTop: '1rem'
-    },
-    itemLabel: {
-      width: '20rem',
-      paddingTop: '1rem'
-    },
-    itemValue: {
-      width: '20rem'      
-    },
-    section : {
-      paddingLeft: '2rem'
-    },
-    sectionTitle: {
-      fontSize: '1.2rem',
-      padding: '1rem 0',
+    label: {
       fontWeight: 600
+    },
+    input: {
+      width: '95%', 
+      border: 'none', 
+      fontSize: '0.9rem',
+      fontFamily: 'Arial'
+    },
+    rowLabel : {
+      backgroundColor: 'lightGrey'
     }
 }));
 
 function App() {
   const { classes } = useStyles();
+  const reportTemplateRef = useRef(null);
   const [data, setData] = useState(
     {
       customerName: '',
@@ -59,7 +63,11 @@ function App() {
       trip: false, 
       signOff: false, 
       return: false,
-      date: ''
+      lastInstallDate: '',
+      productOrderedDate: '',
+      expectedArrivalDate: '',
+      arrangedReturnDate: '',
+      jobCompletedDate: '',
     }
   );
   
@@ -91,11 +99,24 @@ function App() {
     }
   }
 
-    const handleDateChange = (val) => {
+    const handleDateChange = (name, val) => {
+      console.log(val)
+      console.log(name)
     if(val){      
       setData(d => {
         let _d = {...d};
-        _d['date'] = val;
+        _d[name] = val;
+        return _d;
+      })
+    }
+  }
+
+  const handleRadioChange = (e) => {
+    if(e){
+      console.log(e)
+      setData(d => {
+        let _d = {...d};
+        _d[e.target.name] = e.target.id === 'yes' ? true : false;
         return _d;
       })
     }
@@ -105,142 +126,272 @@ function App() {
     console.log('data', data)
   }, [data])
 
+  const handleInputOnChange = (e) => {
+    console.log('e', e.target.value)
+  }
+
+  const YesNo = (props) => {
+    const { name } = props;
+    return(
+      <div style={{paddingLeft: '0.5rem'}}>
+        <label>Yes</label>
+        <input type='radio' value='yes' id='yes' name={name} onChange={handleRadioChange} checked={data[name]}/>
+        <label style={{paddingLeft: '0.5rem'}}>No</label>           
+        <input type='radio' value='no' id='no' name={name} onChange={handleRadioChange} checked={!data[name]}/>        
+    </div>
+    )
+  }
+
+  const handleGeneratePdf = () => {
+    const doc = new jsPDF({
+      format: "a4",
+      unit: "px",
+    });
+
+    // Adding the fonts
+    doc.setFont("Inter-Regular", "normal");
+
+    doc.html(reportTemplateRef.current, {
+      async callback(doc) {
+        await doc.save("document");
+      }
+    });
+  };
 
   return (
-    <div className={classes.root}>
-      <Paper elevation={1} className={classes.paper}>
-        <div>
-          <Typography className={classes.title}>Return Trip Checklist</Typography>
-          <Typography className={classes.sectionTitle}>Customer Information</Typography>
-          <div className={classes.section}>
-            <div className={classes.row}>
-              <Typography className={classes.itemLabel}>Customer name:</Typography>
-              <TextField name={'customerName'} onChange={handleInputChage} value={data.customerName} className={classes.itemValue}></TextField>
-            </div>
-            <div className={classes.row}>
-              <Typography className={classes.itemLabel}>Address:</Typography>
-              <TextField name={'address'} onChange={handleInputChage} value={data.address} className={classes.itemValue}></TextField>
-            </div>            
-            <div className={classes.row}>
-              <Typography className={classes.itemLabel}>Phone Number:</Typography>
-              <TextField name={'phoneNumber'} onChange={handleInputChage} value={data.phoneNumber} className={classes.itemValue}></TextField>
-            </div>
-            <div className={classes.row}>
-              <Typography className={classes.itemLabel}>Last install date:</Typography>
-               <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DemoContainer components={['DatePicker']}>
-                    <DatePicker className={classes.itemValue} onChange={handleDateChange} value={data.date}/>
-                  </DemoContainer>
-              </LocalizationProvider>
-            </div>
-            <div className={classes.row}>
-              <Typography className={classes.itemLabel}>Reason for return trip:</Typography>
-              <TextField name={'reason'} onChange={handleInputChage} value={data.reason} className={classes.itemValue} maxRows={4} multiline></TextField>
-            </div>
-            <div className={classes.row}>
-              <Typography className={classes.itemLabel}>Does this return trip require new product? (Yes/No):</Typography>
-              <Switch onChange={handleSwitchChange} name={'trip'} checked={data.trip}/>
-            </div>
-            <div className={classes.row}>
-              <Typography className={classes.itemLabel}>Item #'s & Description:</Typography>
-              <TextField name={'item'} onChange={handleInputChage} value={data.item} className={classes.itemValue} maxRows={4} multiline></TextField>
-            </div>
-            <div className={classes.row}>
-              <Typography className={classes.itemLabel}>Photo of defects required for remakes. Complete? (Yes/No):</Typography>
-              <Switch/>
-            </div>
-            <div className={classes.row}>
-              <Typography className={classes.itemLabel}>Has the customer signed off/paid for job? (Yes/No):</Typography>
-              <Switch onChange={handleSwitchChange} name={'signOff'} checked={data.signOff}/>
-            </div>
-            <div className={classes.row}>
-              <Typography className={classes.itemLabel}>Have you given then a return date? (Yes/No):</Typography>
-              <Switch onChange={handleSwitchChange} name={'return'} checked={data.return}/>
-            </div>
-          </div>
-          <Typography className={classes.sectionTitle}>Additional Information</Typography>
-          <div className={classes.section}>
-            <div className={classes.row}>
-              <Typography className={classes.itemLabel}>Additional Instructions for Installer:</Typography>
-              <TextField name={'reason'} onChange={handleInputChage} value={data.reason} className={classes.itemValue} maxRows={4} multiline></TextField>
-            </div>
-            <div className={classes.row}>
-              <Typography className={classes.itemLabel}>Completion Notes if needed:</Typography>
-              <TextField name={'reason'} onChange={handleInputChage} value={data.reason} className={classes.itemValue} maxRows={4} multiline></TextField>
-            </div>
-          </div>
-          <Typography className={classes.sectionTitle}>Admin To Complete</Typography>
-          <div className={classes.section}>
-            <div className={classes.row}>
-              <Typography className={classes.itemLabel}>Product Ordered Date:</Typography>
-               <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DemoContainer components={['DatePicker']}>
-                    <DatePicker className={classes.itemValue} onChange={handleDateChange} value={data.date}/>
-                  </DemoContainer>
-              </LocalizationProvider>
-            </div>
-            <div className={classes.row}>
-              <Typography className={classes.itemLabel}>Expected Arrival Date:</Typography>
-               <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DemoContainer components={['DatePicker']}>
-                    <DatePicker className={classes.itemValue} onChange={handleDateChange} value={data.date}/>
-                  </DemoContainer>
-              </LocalizationProvider>
-            </div>
-            <div className={classes.row}>
-              <Typography className={classes.itemLabel}>Arranged Return Date:</Typography>
-               <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DemoContainer components={['DatePicker']}>
-                    <DatePicker className={classes.itemValue} onChange={handleDateChange} value={data.date}/>
-                  </DemoContainer>
-              </LocalizationProvider>
-            </div>
-            <div className={classes.row}>
-              <Typography className={classes.itemLabel}>Attach Remake Form:</Typography>
-              <Switch onChange={handleSwitchChange} name={'return'} checked={data.return}/>
-            </div>
-            <div className={classes.row}>
-              <Typography className={classes.itemLabel}>Confirmed Arrival Date:</Typography>
-              <Switch onChange={handleSwitchChange} name={'return'} checked={data.return}/>
-            </div>
-            <div className={classes.row}>
-              <Typography className={classes.itemLabel}>Product in Stock:</Typography>
-              <Switch onChange={handleSwitchChange} name={'return'} checked={data.return}/>
-            </div>
-            <div className={classes.row}>
-              <Typography className={classes.itemLabel}>Confirmed Arrival Date:</Typography>
-               <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DemoContainer components={['DatePicker']}>
-                    <DatePicker className={classes.itemValue} onChange={handleDateChange} value={data.date}/>
-                  </DemoContainer>
-              </LocalizationProvider>
-            </div>
-            <div className={classes.row}>
-              <Typography className={classes.itemLabel}>Job Completed By:</Typography>
-                   <Select
-                      labelId="demo-simple-select-label"
-                      id="demo-simple-select"
-                      value={10}
-                      label="Age"
-                      onChange={handleDropdownChange}
-                      className={classes.itemValue}
-                  >
-                    <MenuItem value={10}>Ten</MenuItem>
-                    <MenuItem value={20}>Twenty</MenuItem>
-                    <MenuItem value={30}>Thirty</MenuItem>
-                  </Select>
-            </div>
-            <div className={classes.row}>
-              <Typography className={classes.itemLabel}>Job Completed Date:</Typography>
-               <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DemoContainer components={['DatePicker']}>
-                    <DatePicker className={classes.itemValue} onChange={handleDateChange} value={data.date}/>
-                  </DemoContainer>
-              </LocalizationProvider>
-            </div>
-          </div>
-        </div>
-      </Paper>
+    <div className={classes.root} ref={reportTemplateRef}>
+      <h1>Return Trip Checklist</h1>
+      <Table striped bordered hover style={{width: '50rem'}}>
+      <thead>
+        <tr> 
+          <th colSpan={2} style={{backgroundColor: 'blue', color: '#FFF', textAlign: 'left'}}>Customer Information</th>          
+        </tr>
+      </thead>
+      <tbody>
+      <tr className={classes.rowLabel}>
+          <td className={classes.label}>W/O #</td>
+          <td className={classes.label}>Does this return trip require new product?</td>
+        </tr>
+        <tr>
+          <td>
+            <input 
+              name={'won'}
+              onChange={handleInputChage}
+              value={data.won} 
+              className={classes.input}
+            />
+          </td>
+          <td>
+            <YesNo name={'doesThisReturn'}/>
+          </td>
+        </tr>
+        <tr className={classes.rowLabel}>
+          <td className={classes.label}>Customer name</td>
+          <td className={classes.label}>Photo of defects required for remakes. Complete?</td>
+        </tr>
+        <tr>
+          <td>
+            <input 
+              name={'customerName'}
+              onChange={handleInputChage}
+              value={data.customerName} 
+              className={classes.input}
+            />
+          </td>
+          <td>
+            <YesNo name={'photoOfDefects'}/>
+          </td>
+        </tr>
+        <tr className={classes.rowLabel}>
+          <td className={classes.label}>Address</td>
+          <td className={classes.label}>Has the customer signed off/paid for job?</td>
+        </tr>
+        <tr>
+          <td>
+            <input 
+              name={'address'}
+              onChange={handleInputChage}
+              value={data.address} 
+              className={classes.input}
+            />
+          </td>
+          <td>
+            <YesNo name={'hasTheCustomerSigned'}/>
+          </td>
+        </tr>
+        <tr className={classes.rowLabel}>
+          <td className={classes.label}>Phone Number</td>
+          <td className={classes.label}>Have you given then a return date?</td>
+        </tr>
+        <tr>
+          <td>
+            <input               
+              name={'phoneNumber'}
+              onChange={handleInputChage}
+              value={data.phoneNumber} 
+              className={classes.input}
+            />
+          </td>
+          <td>
+            <YesNo name={'haveYouGiven'}/>
+          </td>
+        </tr>
+        <tr className={classes.rowLabel}>
+          <td className={classes.label}>Last install date</td>
+          <td className={classes.label}>{data.haveYouGiven && 'Return Date'}</td>
+        </tr>
+        <tr>
+          <td>
+            <input
+                type='date' 
+                name={'lastInstallDate'}
+                onChange={handleInputChage}
+                value={data.lastInstallDate} 
+                className={classes.input}
+            />
+          </td>
+          <td>
+            {data.haveYouGiven && 
+              <input
+                  type='date' 
+                  name={'returnDate'}
+                  onChange={handleInputChage}
+                  value={data.returnDate} 
+                  className={classes.input}
+              />
+            }
+          </td>
+        </tr>
+        <tr className={classes.rowLabel}>
+          <td className={classes.label}>Reason for return trip</td>
+          <td className={classes.label}>Item Numbers & Descriptions</td>
+        </tr>
+        <tr>
+          <td>
+            <textarea 
+              name={'reason'}
+              onChange={handleInputChage}
+              value={data.reason} 
+              rows={3}
+              className={classes.input}
+            />
+          </td>
+          <td>
+            <textarea 
+                name={'itemNumbers'}
+                onChange={handleInputChage}
+                value={data.itemNumbers} 
+                rows={3}
+                className={classes.input}
+              />
+          </td>
+        </tr>
+        <tr> 
+          <th colSpan={2} style={{backgroundColor: 'blue', color: '#FFF', textAlign: 'left'}}>Additional Information</th>          
+        </tr>
+        <tr className={classes.rowLabel}>
+          <td className={classes.label}>Additional Instructions for installer</td>
+          <td className={classes.label}>Completion notes if needed</td>
+        </tr>
+        <tr>
+          <td>
+            <textarea 
+              name={'additionalInstructions'}
+              onChange={handleInputChage}
+              value={data.additionalInstructions} 
+              rows={3}
+              className={classes.input}
+            />
+          </td>
+          <td>
+            <textarea 
+                name={'completionNotes'}
+                onChange={handleInputChage}
+                value={data.completionNotes} 
+                rows={3}
+                className={classes.input}
+              />
+          </td>
+        </tr>
+        <tr> 
+          <th colSpan={2} style={{backgroundColor: 'blue', color: '#FFF', textAlign: 'left'}}>Admin To Complete</th>          
+        </tr>
+        <tr className={classes.rowLabel}>
+          <td className={classes.label}>Product Ordered Date</td>
+          <td className={classes.label}>Confirmed Arrival Date</td>
+        </tr>
+        <tr>
+          <td>
+            <input
+                type='date' 
+                name={'productOrderedDate'}
+                onChange={handleInputChage}
+                value={data.productOrderedDate} 
+                className={classes.input}
+            />
+          </td>
+          <td>
+              <YesNo name={'attachRemakeForm'}/>
+          </td>
+        </tr>
+        <tr className={classes.rowLabel}>
+          <td className={classes.label}>Expected Arrival Date</td>
+          <td className={classes.label}>Product In Stock</td>
+        </tr>
+        <tr>
+          <td>
+            <input
+                type='date' 
+                name={'expectedArrivalDate'}
+                onChange={handleInputChage}
+                value={data.expectedArrivalDate} 
+                className={classes.input}
+            />
+          </td>
+          <td>
+            <YesNo name={'productInStock'}/>
+          </td>
+        </tr>
+        <tr className={classes.rowLabel}>
+          <td className={classes.label}>Arranged Return Date</td>
+          <td className={classes.label}>Job Completed By</td>
+        </tr>
+        <tr>
+          <td>
+            <input
+                type='date' 
+                name={'arrangedReturnDate'}
+                onChange={handleInputChage}
+                value={data.arrangedReturnDate} 
+                className={classes.input}
+            />
+          </td>
+          <td>
+
+          </td>
+        </tr>
+        <tr className={classes.rowLabel}>
+          <td className={classes.label}>Attach Remake Form</td>
+          <td className={classes.label}>Job Completed Date</td>
+        </tr>
+        <tr>
+          <td>
+            <YesNo name={'attachRemakeForm'}/>
+          </td>
+          <td>
+            <input
+                type='date' 
+                name={'jobCompletedDate'}
+                onChange={handleInputChage}
+                value={data.jobCompletedDate} 
+                className={classes.input}
+            />
+          </td>
+        </tr>
+      </tbody>
+    </Table>
+    <button className="button" onClick={handleGeneratePdf}>  Generate PDF
+      </button>
     </div>
   );
 }
