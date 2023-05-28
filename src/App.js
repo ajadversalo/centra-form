@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import './App.css';
 import { makeStyles } from 'tss-react/mui';
 import Table from 'react-bootstrap/Table';
@@ -151,13 +151,16 @@ function App() {
               
               if(base64Pdfdata){
                 let emailParams = {
-                  to_name: 'ajadvers@gmail.com',
+                  to_email: 'ajadvers@gmail.com',
+                  cc_email: 'a.adversalo@yahoo.com',
+                  bcc_email: 'ajadvers@gmail.com',
                   from_name: 'AJ Adversalo',
-                  message_html: 'asd',
+                  won: data.won,
+                  message: JSON.stringify(data),
                   content: base64Pdfdata // Attach pdf
                 };
               
-                emailjs.send('service_0cl4yjf', 'template_c2ne7jm', emailParams, 'ajonPi_KH7jk3zPCW') // Send email
+                emailjs.send('service_0cl4yjf', 'template_joy9wqn', emailParams, 'ajonPi_KH7jk3zPCW') // Send email
                 .then((result) => {
                     console.log(result.text);
                     setOpenSuccessPopup(true);
@@ -373,7 +376,7 @@ function App() {
                 />
               </td>
               <td>
-                  <YesNo name={'attachRemakeForm'}/>
+                  <YesNo name={'confirmedArrivalDate'}/>
               </td>
             </tr>
             <tr className={classes.rowLabel}>
